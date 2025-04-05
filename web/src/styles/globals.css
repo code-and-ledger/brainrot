@@ -1,8 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css");
+
 html,
 body {
   padding: 0;
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
     Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
 }
 
@@ -13,4 +19,308 @@ a {
 
 * {
   box-sizing: border-box;
+}
+
+html {
+  background-color: #000
+}
+
+@keyframes mergeToPfpLogo {
+  from {
+    transform: translateX(0);
+    left: 200px !important;
+  }
+
+  to {
+    transform: translateX(-150%);
+
+    left: 50px;
+  }
+}
+
+@layer utilities {
+  .custom-gradient-text {
+    background: linear-gradient(180deg, #2AD8D3 0%, #C5F7E7 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-family: 'Pretendard', sans-serif;
+    /* Ensure Pretendard font is loaded */
+  }
+
+  .custom-gradient-text-normal {
+    color: #FFF;
+    text-align: center;
+    leading-trim: both;
+    text-edge: cap;
+    font-family: Pretendard;
+
+    font-style: normal;
+    font-weight: 400;
+    line-height: 80px;
+    /* 200% */
+    letter-spacing: -0.8px;
+  }
+}
+
+.test {
+  width: 100px;
+  height: 100px;
+  background-color: red;
+  position: relative;
+  animation-name: slideFromLeft;
+  animation-duration: 4s;
+}
+
+@keyframes slideLeft {
+  from {
+    left: -100px;
+  }
+
+  to {
+    left: 30px;
+
+  }
+}
+
+@keyframes slideRight {
+  from {
+    left: 100px;
+  }
+
+  to {
+    left: -20px;
+  }
+}
+
+
+
+.animate-slideFromRight {
+  position: relative;
+  animation-name: slideRight;
+  animation-duration: 2s;
+}
+
+.animate-slideFromLeft {
+  position: relative;
+  animation-name: slideLeft;
+  animation-duration: 2s;
+}
+
+.pfp-container {
+  display: flex;
+  flex-wrap: wrap;
+
+}
+
+@keyframes popUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes popOut {
+  from {
+    transform: translateY(100%);
+    opacity: 1;
+  }
+
+  to {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+}
+
+@keyframes blink {
+  from {
+
+    opacity: 1;
+  }
+
+  to {
+
+    opacity: 0;
+  }
+}
+
+.fade {
+  animation: popUp 0.5s ease forwards;
+}
+
+.fadeStar {
+  animation: popUp 0.5s ease forwards,
+    blink 3s ease alternate infinite;
+  animation-delay: 0s, 1s;
+}
+
+.fadeAlterim {
+  animation: popUp 1s ease forwards
+}
+
+.fadeClone {
+  animation: cloneLogoUp 3s ease forwards, cloneLogoDown 3s ease forwards;
+  animation-delay: 2s, 3s;
+}
+
+@keyframes cloneLogoUp {
+  from {
+    transform: translateY(100%);
+    opacity: 1;
+  }
+
+  to {
+    transform: translateY(-100%);
+    opacity: 1;
+  }
+}
+
+@keyframes cloneLogoDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 1;
+  }
+
+  to {
+    transform: translateY(-50%);
+    opacity: 1;
+  }
+}
+
+@keyframes buzz {
+  0% {
+    transform: translateX(0);
+  }
+
+  10% {
+    transform: translateX(-3px);
+  }
+
+  20% {
+    transform: translateX(3px);
+  }
+
+  30% {
+    transform: translateX(-3px);
+  }
+
+  40% {
+    transform: translateX(3px);
+  }
+
+  50% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.pfp {
+
+  opacity: 0;
+  width: 155px;
+  height: 155px;
+  /* animation: popUp 0.5s ease forwards; */
+  margin-right: -100px;
+  animation: popUp 0.5s ease forwards, buzz 3s ease forwards infinite;
+  animation-delay: 0.5s, 5s;
+
+}
+
+.pfpscribbles {
+  width: 65px;
+  opacity: 0;
+  height: 105px;
+  /* animation: popUp 4s ease forwards; */
+  animation: popUp 4s ease forwards, buzz 1s ease forwards infinite;
+  animation-delay: 4s, 6s;
+  /* Start buzzing after popUp finishes */
+
+}
+
+@keyframes slightMovement {
+
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+
+  25% {
+    transform: translate(-2px, 2px);
+  }
+
+  50% {
+    transform: translate(2px, -2px);
+  }
+
+  75% {
+    transform: translate(-2px, -2px);
+  }
+}
+
+.pfp-0 {
+  animation-delay: 0.0s;
+}
+
+.pfp-1 {
+  animation-delay: 0.3s;
+}
+
+.pfp-2 {
+  animation-delay: 0.6s;
+}
+
+.pfp-3 {
+  animation-delay: 0.9s;
+}
+
+.pfp-4 {
+  animation-delay: 1.2s;
+}
+
+.pfp-5 {
+  animation-delay: 1.5s;
+}
+
+.pfp-6 {
+  animation-delay: 1.8s;
+}
+
+.pfp-7 {
+  animation-delay: 2.1s;
+}
+
+.pfp-8 {
+  animation-delay: 2.4s;
+}
+
+.pfp-9 {
+  animation-delay: 2.7s;
+}
+
+.pfp-10 {
+  animation-delay: 3.0s;
+}
+
+.pfp-11 {
+  animation-delay: 3.3s;
+}
+
+.pfp-12 {
+  animation-delay: 3.6s;
+}
+
+.pfp-13 {
+  animation-delay: 3.9s;
+}
+
+.pfp-14 {
+  animation-delay: 4.2s;
 }
