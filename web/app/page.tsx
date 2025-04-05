@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import styles from "../styles/Home.module.css";
 import Navbar from "../app/components/Navbar";
 import PrimaryButton from "../app/components/primaryButton";
+import Footer from "./components/Footer";
 
 export default function Home() {
   return (
@@ -32,24 +33,7 @@ export default function Home() {
             </div>
           </main>
 
-          <footer className="py-6 mt-12 border-t border-gray-800 text-center text-[#fff]">
-            <div className="container mx-auto">
-              <p className="flex items-center justify-center gap-2">
-                Made with <span className="text-red-500">❤️</span> by
-                <a
-                  href="https://github.com/brain-rot"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[#2AD8D3] hover:underline"
-                >
-                  brain_rot
-                </a>
-              </p>
-              <p className="mt-2 text-sm">
-                © {new Date().getFullYear()} All rights reserved
-              </p>
-            </div>
-          </footer>
+          <Footer />
         </div>
       </main>
     </>

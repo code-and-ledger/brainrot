@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 function Footer() {
   return (
     <footer className="py-6 mt-12 border-t border-gray-800 text-center items-center text-[#fff]">
@@ -7,12 +6,7 @@ function Footer() {
           className="flex flex-col items-center justify-center text-center w-full"
           style={{ fontFamily: "var(--font-permanent-marker)" }}
         >
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="flex items-center font-Pretendard font-[800] gap-2 text-[#FFFFFF] text-[28px] md:text-[24px]     text-left"
-          >
+          <div className="flex items-center font-Pretendard font-[800] gap-2 text-[#FFFFFF] text-[28px] md:text-[24px]     text-left">
             <img
               className="h-[26px] w-auto mr-2"
               src={"/assets/logo.png"}
@@ -36,7 +30,7 @@ function Footer() {
                 COROT
               </a>
             </span>
-          </motion.div>
+          </div>
         </div>
       </div>
     </footer>

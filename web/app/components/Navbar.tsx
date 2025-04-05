@@ -20,10 +20,15 @@ function Navbar() {
             className="mx-auto flex  items-center  justify-center"
             aria-label="Global"
           >
-            <div className="flex items-center    lg:flex-1">
+            <div
+              className="flex items-center  cursor-pointer  lg:flex-1"
+              onClick={() => {
+                router.push("/");
+              }}
+            >
               <div className="flex items-center justify-center  text-white gap-2">
                 <img
-                  className="h-[46px] w-auto"
+                  className="h-[46px] w-auto  "
                   src={"/assets/logo.png"}
                   alt=""
                 />
@@ -38,7 +43,7 @@ function Navbar() {
 
             <div className="flex items-center gap-5   lg:justify-end">
               <div
-                className="flex items-center text-[#fff] gap-4 mr-10"
+                className="flex items-center cursor-pointer text-[#fff] gap-4 mr-10"
                 style={{ fontSize: "18px", marginRight: "10px" }}
                 onClick={() => {
                   router.push("/working");
