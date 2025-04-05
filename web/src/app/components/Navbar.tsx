@@ -4,10 +4,12 @@ import PrimaryButton from "./primaryButton";
 import { motion } from "framer-motion";
 import { fadeInUp, staggerContainer } from "./variants.js";
 import HowItWorksPopup from "./HowItWorksPopup";
+import { useRouter } from "next/navigation";
+import SecondaryButton from "./secondarybutton";
 
 function Navbar() {
   const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
-
+  const router = useRouter();
   return (
     <>
       <motion.nav variants={fadeInUp} className="p-4">
@@ -29,8 +31,22 @@ function Navbar() {
               </div>
             </div>
 
-            <div className="flex items-center gap-4 lg:flex-1 lg:justify-end">
-              <PrimaryButton children={"Launch App"} onClick={() => {}} />
+            <div className="flex items-center gap-5   lg:justify-end">
+              <div
+                className="flex items-center text-[#fff] gap-4 mr-10"
+                style={{ fontSize: "18px", marginRight: "10px" }}
+                onClick={() => {
+                  router.push("/working");
+                }}
+              >
+                Working
+              </div>
+              <PrimaryButton
+                children={"Launch App"}
+                onClick={() => {
+                  router.push("/app");
+                }}
+              />
             </div>
           </nav>
         </header>
