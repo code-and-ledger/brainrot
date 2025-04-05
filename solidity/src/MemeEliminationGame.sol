@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "../lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
+import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import "../lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
 
@@ -119,7 +119,7 @@ contract MemeEliminationGame is Ownable, ReentrancyGuard {
     }
     
     /**
-     * @dev Vote to eliminate a meme
+     * @dev Votes to eliminate a meme
      * @param _memeId ID of the meme to vote for elimination
      */
     function voteToEliminate(uint256 _memeId) external nonReentrant {
@@ -131,13 +131,11 @@ contract MemeEliminationGame is Ownable, ReentrancyGuard {
         // Transfer USDC from user to contract
         require(usdcToken.transferFrom(msg.sender, address(this), VOTE_COST), "USDC transfer failed");
         
-        // Record the vote
+        // Update state after external call to prevent reentrancy
+        prizePool += VOTE_COST;
         memes[_memeId].eliminationVotes++;
         userVotedOnMeme[msg.sender][_memeId] = true;
         memeVoters[_memeId].push(msg.sender);
-        
-        // Add to prize pool
-        prizePool += VOTE_COST;
         
         emit VoteCast(msg.sender, _memeId);
     }
@@ -204,6 +202,9 @@ contract MemeEliminationGame is Ownable, ReentrancyGuard {
         Meme storage winnerMeme = memes[winnerMemeId];
         address[] storage voters = memeVoters[winnerMemeId];
         
+        // Zero out prize pool before transfers to prevent reentrancy
+        prizePool = 0;
+        
         // Send creator reward
         require(usdcToken.transfer(winnerMeme.creator, creatorReward), "Creator reward transfer failed");
         
@@ -221,9 +222,6 @@ contract MemeEliminationGame is Ownable, ReentrancyGuard {
         
         // Send platform fee to owner
         require(usdcToken.transfer(owner(), platformFee), "Platform fee transfer failed");
-        
-        // Reset prize pool
-        prizePool = 0;
         
         emit RewardsDistributed(winnerMemeId, creatorReward, votersReward);
     }
