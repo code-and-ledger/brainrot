@@ -17,6 +17,7 @@
     "react-confetti": "^6.4.0",
     "react-dom": "^19.0.0",
     "react-use": "^17.6.0",
+    "tailwindcss-animate": "^1.0.7",
     "viem": "^2.25.0",
     "wagmi": "^2.14.16"
   },

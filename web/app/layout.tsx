@@ -2,6 +2,23 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "@rainbow-me/rainbowkit/styles.css";
+import { Permanent_Marker } from "next/font/google";
+
+// const dmSans = DM_Sans({
+//   variable: "-- -dm-sans",
+//   subsets: ["latin"],
+// });
+
+// const fruktur = Fruktur({
+//   variable: "--font-fruktur",
+//   subsets: ["latin"],
+// });
+
+const permanentMarker = Permanent_Marker({
+  variable: "--font-permanent-marker",
+  subsets: ["latin"],
+  weight: ["400"],
+});
 
 import ClientLayout from "./client-layout";
 
@@ -26,9 +43,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${permanentMarker.variable}`}>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${permanentMarker.variable} antialiased`}
       >
         <ClientLayout>{children}</ClientLayout>
       </body>

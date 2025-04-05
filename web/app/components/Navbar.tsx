@@ -14,20 +14,23 @@ function Navbar() {
   const router = useRouter();
   return (
     <>
-      <motion.nav variants={fadeInUp} className="p-4">
+      <motion.nav variants={fadeInUp} className="p-2  ">
         <header className="bg-[#000] p-2">
           <nav
-            className="mx-auto flex p-2 items-center justify-between"
+            className="mx-auto flex  items-center  justify-center"
             aria-label="Global"
           >
-            <div className="flex items-center lg:flex-1">
-              <div className="flex items-center text-white gap-2">
+            <div className="flex items-center    lg:flex-1">
+              <div className="flex items-center justify-center  text-white gap-2">
                 <img
-                  className="h-[56px] w-auto"
+                  className="h-[46px] w-auto"
                   src={"/assets/logo.png"}
                   alt=""
                 />
-                <span className="font-Pretendard text-[#FFFFFF] text-center text-[28px] md:text-[48px] mt-10">
+                <span
+                  className="font-Permanent_Marker text-[#FFFFFF] text-center text-[28px] md:text-[48px]  "
+                  style={{ fontFamily: "var(--font-permanent-marker)" }}
+                >
                   brain_rot
                 </span>
               </div>

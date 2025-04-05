@@ -30,21 +30,27 @@ const Working = () => {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
-                className="flex items-center font-Pretendard font-[800] text-[#FFFFFF] text-[28px] md:text-[24px] max-w-2xl mb-10 text-left"
+                className="flex items-center font-Pretendard font-[800] gap-2 text-[#FFFFFF] text-[28px] md:text-[24px] max-w-2xl   text-left"
               >
                 <img
                   className="h-[26px] w-auto mr-2"
                   src={"/assets/logo.png"}
                   alt=""
                 />
-                brain_rot is place where memes come to life
+                <span style={{ fontFamily: "var(--font-permanent-marker)" }}>
+                  brain_rot
+                </span>
+                {"   "}
+                <span className="font-normal">
+                  is place where memes come to life.
+                </span>
               </motion.div>
             </div>
             <div
               className="flex flex-col items-start justify-start text-start w-full"
               style={{ marginTop: "40px" }}
             >
-              <div className="flex gap-4 flex-col mb-10 mt-10">
+              <div className="flex gap-4 flex-col mb-10  ">
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -81,7 +87,7 @@ const Working = () => {
             className="flex flex-col items-start justify-start text-start w-full"
             style={{ marginTop: "40px" }}
           >
-            <div className="flex justify-center mt-10">
+            <div className="flex justify-center ">
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
