@@ -10,7 +10,8 @@ contract MemeCompetition is Ownable {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     // FLOW token address (adjust for Flow EVM)
-    address public constant FLOW_TOKEN = 0x1654653399040A61; // Replace with actual Flow EVM token address
+    address public constant FLOW_TOKEN =
+        0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9; // Replace with actual Flow EVM token address
 
     struct Game {
         uint256 gameId;

@@ -1,14 +1,11 @@
-import hre from "hardhat";
+import { ethers } from "hardhat";
 
 async function main() {
-  const initialSupply = hre.ethers.parseEther("1000000"); // 1 million tokens
-  const myToken = await hre.ethers.deployContract("MyFlowToken", [
-    initialSupply,
-  ]);
+  const MemeCompetition = await ethers.getContractFactory("MemeCompetition");
+  const memeCompetition = await MemeCompetition.deploy();
 
-  await myToken.waitForDeployment();
-
-  console.log(`MyFlowToken deployed to ${myToken.target}`);
+  await memeCompetition.waitForDeployment();
+  console.log("MemeCompetition deployed to:", memeCompetition.target);
 }
 
 main().catch((error) => {
