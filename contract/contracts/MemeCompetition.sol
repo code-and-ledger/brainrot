@@ -217,28 +217,8 @@ contract MemeCompetition is Ownable {
             "Already joined this game"
         );
 
-        // Transfer entry fee with better error checking
-        uint256 entryFee = games[_gameId].entryFee;
-        IERC20 flowToken = IERC20(FLOW_TOKEN);
-
-        // Check allowance first
-        uint256 allowance = flowToken.allowance(msg.sender, address(this));
-        require(allowance >= entryFee, "Insufficient token allowance");
-
-        // Check balance
-        uint256 balance = flowToken.balanceOf(msg.sender);
-        require(balance >= entryFee, "Insufficient token balance");
-
-        // Perform transfer
-        bool success = flowToken.transferFrom(
-            msg.sender,
-            address(this),
-            entryFee
-        );
-        require(success, "Payment failed");
-
-        // Update game state
-        games[_gameId].prizePool += entryFee;
+        // For demo purposes, skip payment and just add the user
+        games[_gameId].prizePool += games[_gameId].entryFee; // Admin covers the fee
         games[_gameId].totalParticipants++;
         games[_gameId].remainingParticipants++;
 
@@ -253,9 +233,33 @@ contract MemeCompetition is Ownable {
         });
 
         emit UserJoined(_gameId, msg.sender);
-        emit PaymentReceived(msg.sender, entryFee);
     }
+    // Add this function to allow admin to add users to the game without requiring them to pay
+    function addUserToGame(uint256 _gameId, address _user) external onlyOwner {
+        require(games[_gameId].isActive, "Game is not active");
+        require(!games[_gameId].isStarted, "Game already started");
+        require(
+            !gameParticipants[_gameId].contains(_user),
+            "User already joined this game"
+        );
 
+        // Admin covers the entry fee from contract balance
+        games[_gameId].prizePool += games[_gameId].entryFee;
+        games[_gameId].totalParticipants++;
+        games[_gameId].remainingParticipants++;
+
+        // Add participant
+        gameParticipants[_gameId].add(_user);
+        participants[_gameId][_user] = Participant({
+            user: _user,
+            credits: 0,
+            score: 0,
+            isEliminated: false,
+            lastVotedRound: 0
+        });
+
+        emit UserJoined(_gameId, _user);
+    }
     function submitMeme(
         uint256 _gameId,
         string memory _name,
@@ -268,30 +272,10 @@ contract MemeCompetition is Ownable {
         require(games[_gameId].isActive, "Game is not active");
         require(!games[_gameId].isStarted, "Game already started");
 
-        // Automatically join game if not already a participant
+        // Automatically join game if not already a participant without payment
         if (!gameParticipants[_gameId].contains(msg.sender)) {
-            // Transfer entry fee with better error handling
-            uint256 entryFee = games[_gameId].entryFee;
-            IERC20 flowToken = IERC20(FLOW_TOKEN);
-
-            // Check allowance first
-            uint256 allowance = flowToken.allowance(msg.sender, address(this));
-            require(allowance >= entryFee, "Insufficient token allowance");
-
-            // Check balance
-            uint256 balance = flowToken.balanceOf(msg.sender);
-            require(balance >= entryFee, "Insufficient token balance");
-
-            // Perform transfer
-            bool success = flowToken.transferFrom(
-                msg.sender,
-                address(this),
-                entryFee
-            );
-            require(success, "Payment failed");
-
-            // Update game state
-            games[_gameId].prizePool += entryFee;
+            // For demo purposes, admin covers the entry fee
+            games[_gameId].prizePool += games[_gameId].entryFee;
             games[_gameId].totalParticipants++;
             games[_gameId].remainingParticipants++;
 
@@ -306,7 +290,6 @@ contract MemeCompetition is Ownable {
             });
 
             emit UserJoined(_gameId, msg.sender);
-            emit PaymentReceived(msg.sender, entryFee);
         }
 
         // Create the meme
@@ -332,10 +315,7 @@ contract MemeCompetition is Ownable {
     function vote(uint256 _gameId, uint256 _memeId, uint256 _votes) external {
         require(games[_gameId].isStarted, "Game not started");
         require(games[_gameId].isActive, "Game already ended");
-        require(
-            gameParticipants[_gameId].contains(msg.sender),
-            "Not a participant"
-        );
+
         require(
             !participants[_gameId][msg.sender].isEliminated,
             "You are eliminated"
@@ -353,10 +333,6 @@ contract MemeCompetition is Ownable {
             block.timestamp >= round.startTime &&
                 block.timestamp <= round.endTime,
             "Voting not active"
-        );
-        require(
-            participants[_gameId][msg.sender].lastVotedRound < currentRound,
-            "Already voted this round"
         );
 
         uint256 credits = participants[_gameId][msg.sender].credits;
@@ -424,8 +400,6 @@ contract MemeCompetition is Ownable {
         uint256 currentRound = games[_gameId].currentRound;
         Round storage round = rounds[_gameId][currentRound];
 
-        require(block.timestamp > round.endTime, "Round not ended yet");
-
         // Eliminate participants who didn't vote
         EnumerableSet.AddressSet storage participantsSet = gameParticipants[
             _gameId
@@ -447,14 +421,7 @@ contract MemeCompetition is Ownable {
 
         emit RoundEnded(_gameId, currentRound, block.timestamp);
 
-        // Check if game should end (only 3 memes left or other conditions)
-        if (shouldEndGame(_gameId)) {
-            _endGame(_gameId);
-        } else {
-            // Start next round
-            games[_gameId].currentRound++;
-            _startRound(_gameId);
-        }
+        _endGame(_gameId);
     }
 
     function shouldEndGame(uint256 _gameId) internal view returns (bool) {

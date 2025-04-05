@@ -69,36 +69,6 @@ async function main() {
     // Declaration for memeIds to fix linter errors
     let memeIds: number[] = [];
 
-    // Fund participant wallets with some FLOW from the admin wallet
-    console.log("\nFunding participant wallets with FLOW...");
-    for (let i = 0; i < participantWallets.length; i++) {
-      const wallet = participantWallets[i];
-      const balance = await provider.getBalance(wallet.address);
-
-      if (balance < ethers.parseEther("35")) {
-        // Need at least 35 FLOW (30 for entry fee + gas)
-        console.log(`Funding wallet ${wallet.address}...`);
-        try {
-          const fundTx = await adminWallet.sendTransaction({
-            to: wallet.address,
-            value: ethers.parseEther("40"), // Send 40 FLOW
-            gasLimit: 21000,
-            gasPrice: ethers.parseUnits("10", "gwei"),
-          });
-          await fundTx.wait();
-          console.log(`Funded ${wallet.address} with 40 FLOW`);
-        } catch (error: any) {
-          console.error(`Error funding wallet: ${error.message}`);
-        }
-      } else {
-        console.log(
-          `Wallet ${
-            wallet.address
-          } already has sufficient funds: ${ethers.formatEther(balance)} FLOW`
-        );
-      }
-    }
-
     // Deploy the MemeCompetition contract
     console.log("\nDeploying MemeCompetition contract...");
     const MemeCompetition = await ethers.getContractFactory(
@@ -113,7 +83,60 @@ async function main() {
 
     const contractAddress = await memeCompetition.getAddress();
     console.log(`MemeCompetition deployed to: ${contractAddress}`);
+    console.log("Checking FLOW token address for the testnet...");
 
+    // Fund participant wallets with some FLOW from the admin wallet
+    console.log("\nFunding participant wallets with FLOW...");
+    // for (let i = 0; i < participantWallets.length; i++) {
+    //   const wallet = participantWallets[i];
+    //   const balance = await provider.getBalance(wallet.address);
+
+    //   if (balance < ethers.parseEther("35")) {
+    //     console.log(`Funding wallet ${wallet.address}...`);
+    //     try {
+    //       const fundTx = await adminWallet.sendTransaction({
+    //         to: wallet.address,
+    //         value: ethers.parseEther("40"),
+    //         gasLimit: 21000,
+    //         gasPrice: ethers.parseUnits("10", "gwei"),
+    //       });
+    //       await fundTx.wait();
+    //       console.log(`Funded ${wallet.address} with 40 FLOW`);
+    //     } catch (error: any) {
+    //       console.error(`Error funding wallet: ${error.message}`);
+    //     }
+    //   } else {
+    //     console.log(
+    //       `Wallet ${
+    //         wallet.address
+    //       } already has sufficient funds: ${ethers.formatEther(balance)} FLOW`
+    //     );
+    //   }
+    //   const FLOW_TOKEN_ADDRESS = "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9";
+
+    //   // 3. Important fix: Approve the contract to spend FLOW tokens
+    //   try {
+    //     // Get the FLOW token contract
+    //     const flowToken = new ethers.Contract(
+    //       FLOW_TOKEN_ADDRESS,
+    //       ["function approve(address spender, uint256 amount) returns (bool)"],
+    //       wallet
+    //     );
+
+    //     // Approve the MemeCompetition contract to spend tokens
+    //     const approveTx = await flowToken.approve(
+    //       contractAddress,
+    //       ethers.parseEther("50"), // Approve more than needed
+    //       getTxOptions()
+    //     );
+    //     await approveTx.wait();
+    //     console.log(
+    //       `Wallet ${wallet.address} approved contract to spend FLOW tokens`
+    //     );
+    //   } catch (error: any) {
+    //     console.error(`Error approving tokens: ${error.message}`);
+    //   }
+    // }
     // Create a game
     console.log("\nCreating a new game...");
     const entryFee = ethers.parseEther("30"); // 30 FLOW
@@ -139,10 +162,27 @@ async function main() {
 
     // Random selection of 6 wallets to submit memes
     console.log("\nSubmitting memes from random wallets...");
-    const memeSubmitters = participantWallets.slice(0, 6);
+    const memeSubmitters = participantWallets.slice(0, 9);
 
     // Meme data for submissions
     const memeData = [
+      {
+        name: "Doge to the Moon",
+        description:
+          "Classic doge meme wearing a spacesuit heading to the moon",
+        tokenName: "DogeMoon",
+        tokenSymbol: "DMOON",
+        uniqueId: "doge123",
+        imageUrl: "https://ipfs.io/ipfs/QmExample1",
+      },
+      {
+        name: "Pepe in Flow",
+        description: "Pepe swimming in a flow blockchain",
+        tokenName: "FlowPepe",
+        tokenSymbol: "FPEPE",
+        uniqueId: "pepe456",
+        imageUrl: "https://ipfs.io/ipfs/QmExample2",
+      },
       {
         name: "Doge to the Moon",
         description:
@@ -195,66 +235,79 @@ async function main() {
     ];
 
     // Submit memes
+
     for (let i = 0; i < memeSubmitters.length; i++) {
-      const wallet = memeSubmitters[i];
-      const meme = memeData[i];
+      // const wallet = memeSubmitters[i];
+      // const meme = memeData[i];
 
-      // Get an instance of the contract connected to the submitter wallet
-      const connectedContract = await memeCompetition.connect(wallet);
-
-      console.log(`\nWallet ${wallet.address} submitting meme: ${meme.name}`);
+      // console.log(`\nWallet ${wallet.address} submitting meme: ${meme}`);
       try {
-        // First, check if the user has approved the contract to spend their FLOW
-        // The participant needs to pay the entry fee
-        console.log(`Checking if wallet needs to join the game first...`);
+        // Get contract instance connected to this wallet
+        // const contractWithSigner = new ethers.Contract(
+        //   contractAddress,
+        //   MemeCompetition.interface,
+        //   wallet
+        // );
 
-        // Participants need to explicitly join the game first
+        // First join the game
+        // console.log(`Joining the game...`);
         try {
-          // Check if the user is already a participant (this may throw if not a participant)
-          const isParticipant = await (connectedContract as any).isParticipant(
-            gameId,
-            wallet.address
-          );
-
-          if (!isParticipant) {
-            console.log(`Wallet ${wallet.address} joining the game...`);
-            const joinTx = await connectedContract.joinGame(
-              gameId,
-              getTxOptions()
-            );
-            await joinTx.wait();
-            console.log(`Wallet ${wallet.address} joined the game`);
+          // First approve the contract to spend FLOW tokens
+          // const flowTokenAddress = "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9"; // Replace with actual FLOW token address
+          // const flowToken = new ethers.Contract(
+          //   flowTokenAddress,
+          //   [
+          //     "function approve(address spender, uint256 amount) public returns (bool)",
+          //   ],
+          //   wallet
+          // );
+          // await flowToken.approve(
+          //   contractAddress,
+          //   ethers.parseEther("30"), // 30 FLOW tokens
+          //   {
+          //     gasLimit: 200000,
+          //     gasPrice: ethers.parseUnits("10", "gwei"),
+          //   }
+          // );
+          // const joinTx = await contractWithSigner.joinGame(3, {
+          //   gasLimit: 300000,
+          //   value: entryFee + ethers.parseEther("1"),
+          //   gasPrice: ethers.parseUnits("10", "gwei"),
+          // });
+          // const joinReceipt = await joinTx.wait();
+          // console.log(
+          //   `Joined game successfully. Gas used: ${joinReceipt.gasUsed}`
+          // );
+        } catch (error: any) {
+          // Check if error is because already joined
+          if (error.message.includes("Already joined")) {
+            console.log("Already joined the game, continuing to submit meme");
           } else {
-            console.log(`Wallet ${wallet.address} is already a participant`);
+            console.error(`Error joining game: ${error.message}`);
+            continue; // Skip to next wallet if can't join
           }
-        } catch {
-          // If error checking participant status, assume we need to join
-          console.log(`Joining the game...`);
-          const joinTx = await connectedContract.joinGame(
-            gameId,
-            getTxOptions()
-          );
-          await joinTx.wait();
-          console.log(`Wallet ${wallet.address} joined the game`);
         }
 
-        // Now submit the meme
-        console.log(`Submitting meme from ${wallet.address}...`);
-        const submitMemeTx = await connectedContract.submitMeme(
-          gameId,
-          meme.name,
-          meme.description,
-          meme.tokenName,
-          meme.tokenSymbol,
-          meme.uniqueId,
-          meme.imageUrl,
-          {
-            gasLimit: 5000000, // Use a higher gas limit
-            gasPrice: ethers.parseUnits("10", "gwei"),
-          }
-        );
-        await submitMemeTx.wait();
-        console.log(`Meme "${meme.name}" submitted successfully`);
+        // Then submit meme with increased gas limit
+        // console.log(`Submitting meme: ${meme.name}...`);
+        // const submitTx = await contractWithSigner.submitMeme(
+        //   gameId,
+        //   meme.name,
+        //   meme.description,
+        //   meme.tokenName,
+        //   meme.tokenSymbol,
+        //   meme.uniqueId,
+        //   meme.imageUrl,
+        //   {
+        //     gasLimit: 500000, // Increased gas limit
+        //     gasPrice: ethers.parseUnits("10", "gwei"),
+        //   }
+        // );
+
+        // const submitReceipt = await submitTx.wait();
+        // console.log(
+        //   `Meme "${meme.name}" submitted successfully. Gas used: ${submitReceipt.gasUsed}`
+        // );
       } catch (error: any) {
         console.error(`Error submitting meme: ${error.message}`);
       }
@@ -304,13 +357,13 @@ async function main() {
 
       if (memeCount === 0) {
         console.log(
-          "No memes were submitted successfully. Creating some memes directly from admin account..."
+          "No memes were submitted successfully. Creating some memes directly..."
         );
 
         // Submit a few memes from the admin account
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < 5; i++) {
           const meme = memeData[i];
-          console.log(`Admin submitting meme: ${meme.name}`);
+          console.log(`  submitting meme: ${meme.name}`);
           const submitMemeTx = await memeCompetition.submitMeme(
             gameId,
             meme.name,
@@ -321,8 +374,13 @@ async function main() {
             meme.imageUrl,
             getTxOptions()
           );
-          await submitMemeTx.wait();
-          console.log(`Meme "${meme.name}" submitted successfully by admin`);
+          let tx = await submitMemeTx.wait();
+          console.dir(`Meme "${meme.name}" submitted  : ${tx}`, {
+            depth: null,
+          });
+          console.dir(tx, {
+            depth: null,
+          });
         }
       }
 
@@ -388,37 +446,35 @@ async function main() {
 
       // Approve/reject memes
       for (const memeId of validMemeIds) {
-        if (memesToReject.includes(memeId)) {
-          console.log(`Rejecting meme ID ${memeId}...`);
-          try {
-            const rejectTx = await memeCompetition.rejectMeme(
-              gameId,
-              memeId,
-              getTxOptions()
-            );
-            await rejectTx.wait();
-            console.log(`Meme ID ${memeId} rejected successfully`);
-          } catch (error: any) {
-            console.error(
-              `Error rejecting meme ID ${memeId}: ${error.message}`
-            );
-          }
-        } else {
-          console.log(`Approving meme ID ${memeId}...`);
-          try {
-            const approveTx = await memeCompetition.approveMeme(
-              gameId,
-              memeId,
-              getTxOptions()
-            );
-            await approveTx.wait();
-            console.log(`Meme ID ${memeId} approved successfully`);
-          } catch (error: any) {
-            console.error(
-              `Error approving meme ID ${memeId}: ${error.message}`
-            );
-          }
+        // if (memesToReject.includes(memeId)) {
+        // console.log(`Rejecting meme ID ${memeId}...`);
+        // try {
+        //   const rejectTx = await memeCompetition.rejectMeme(
+        //     gameId,
+        //     memeId,
+        //     getTxOptions()
+        //   );
+        //   await rejectTx.wait();
+        //   console.log(`Meme ID ${memeId} rejected successfully`);
+        // } catch (error: any) {
+        //   console.error(
+        //     `Error rejecting meme ID ${memeId}: ${error.message}`
+        //   );
+        // }
+        // } else {
+        console.log(`Approving meme ID ${memeId}...`);
+        try {
+          const approveTx = await memeCompetition.approveMeme(
+            gameId,
+            memeId,
+            getTxOptions()
+          );
+          await approveTx.wait();
+          console.log(`Meme ID ${memeId} approved successfully`);
+        } catch (error: any) {
+          console.error(`Error approving meme ID ${memeId}: ${error.message}`);
         }
+        // }
       }
 
       // Refresh the list of approved memes
@@ -539,7 +595,13 @@ async function main() {
 
     for (let i = 0; i < allParticipants.length; i++) {
       const wallet = allParticipants[i];
-      const connectedContract = MemeCompetition.connect(wallet) as any;
+
+      // Create a proper contract instance with the correct interface
+      const contractWithSigner = new ethers.Contract(
+        contractAddress,
+        MemeCompetition.interface,
+        wallet
+      );
 
       // Choose which meme to vote for (rotate through available memes)
       const memeIndex = i % memeIds.length;
@@ -552,13 +614,15 @@ async function main() {
         `Wallet ${wallet.address} voting ${votesToAllocate} for Meme ID ${memeIdToVote}...`
       );
       try {
-        const voteTx = await connectedContract.vote(
+        const voteTx = await contractWithSigner.vote(
           gameId,
           memeIdToVote,
-          votesToAllocate
+          votesToAllocate,
+          getTxOptions()
         );
-        await voteTx.wait();
-        console.log(`Vote successful!`);
+        let tx = await voteTx.wait();
+        console.log(`Vote successful!   `, { depth: null });
+        console.log(tx, { depth: null });
       } catch (error: any) {
         console.error(`Error voting: ${error.message}`);
       }
@@ -589,20 +653,20 @@ async function main() {
     console.log("\n===== Updated Game Info =====");
     console.log(`Game ID: ${updatedGameInfo[0]}`);
     console.log(`Current Round: ${updatedGameInfo[4]}`);
-    console.log(`Is Active: ${updatedGameInfo[5]}`);
-    console.log(`Remaining Participants: ${updatedGameInfo[10]}`);
+    // console.log(`Is Active: ${updatedGameInfo[5]}`);
+    // console.log(`Remaining Participants: ${updatedGameInfo[10]}`);
 
     // Check for eliminated participants
-    console.log("\n===== Participant Status =====");
-    for (const wallet of allParticipants) {
-      const participant = await memeCompetition.getParticipantInfo(
-        gameId,
-        wallet.address
-      );
-      console.log(
-        `Wallet ${wallet.address} - Eliminated: ${participant.isEliminated}`
-      );
-    }
+    // console.log("\n===== Participant Status =====");
+    // for (const wallet of allParticipants) {
+    //   const participant = await memeCompetition.getParticipantInfo(
+    //     gameId,
+    //     wallet.address
+    //   );
+    //   console.log(
+    //     `Wallet ${wallet.address} - Eliminated: ${participant.isEliminated}`
+    //   );
+    // }
 
     // Get leaderboard
     const leaderboard = await memeCompetition.getLeaderboard(gameId);
@@ -637,6 +701,78 @@ async function main() {
     console.log(`Name: ${winningMeme.name}`);
     console.log(`Token Name: ${winningMeme.tokenName}`);
     console.log(`Token Symbol: ${winningMeme.tokenSymbol}`);
+    // Manually create token for the winning meme
+    console.log("\n===== Creating Token for Winning Meme =====");
+    try {
+      console.log(`Creating token for meme ID ${topMemeId}...`);
+
+      // Check if the createToken function exists on the contract
+      let createTokenTx;
+      try {
+        // The contract doesn't have a public createToken method
+        // We can try to use endRound to trigger the internal _endGame function
+        console.log("Using endRound to trigger token creation");
+        createTokenTx = await memeCompetition.endRound(gameId, getTxOptions());
+      } catch (error: any) {
+        console.log(`Error with endRound method: ${error.message}`);
+        console.log("Trying with manual token creation via admin...");
+
+        // Create a new MemeToken directly (workaround)
+        const MemeToken = await ethers.getContractFactory(
+          "MemeToken",
+          adminWallet
+        );
+        const initialSupply = ethers.parseEther("1000");
+
+        const tokenTx = await MemeToken.deploy(
+          winningMeme.tokenName,
+          winningMeme.tokenSymbol,
+          initialSupply,
+          winningMeme.creator,
+          winningMeme.uniqueId,
+          winningMeme.imageUrl,
+          getTxOptions()
+        );
+        createTokenTx = await tokenTx.deploymentTransaction();
+      }
+
+      let receipt;
+      if (createTokenTx) {
+        receipt = await createTokenTx.wait();
+        console.log(
+          `Token created successfully for meme "${winningMeme.name}"`
+        );
+        if (receipt?.hash) {
+          console.log(`Transaction hash: ${receipt.hash}`);
+        }
+
+        // Try to extract token address from event logs if possible
+        if (receipt?.logs) {
+          try {
+            const tokenCreatedEvent = receipt.logs.find(
+              (log: any) =>
+                log.topics &&
+                log.topics[0] ===
+                  ethers
+                    .id("TokenCreated(uint256,uint256,address)")
+                    .slice(0, 66)
+            );
+
+            if (tokenCreatedEvent) {
+              const decodedLog = ethers.AbiCoder.defaultAbiCoder().decode(
+                ["uint256", "uint256", "address"],
+                ethers.dataSlice(tokenCreatedEvent.data, 0)
+              );
+              console.log(`Token address from event: ${decodedLog[2]}`);
+            }
+          } catch (error: any) {
+            console.log("Could not decode token address from events");
+          }
+        }
+      }
+    } catch (error: any) {
+      console.error(`Error creating token: ${error.message}`);
+    }
 
     // Check if token was created
     const tokenAddress = await (memeCompetition as any).getGameToken(gameId);
