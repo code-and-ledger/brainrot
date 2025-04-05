@@ -54,7 +54,7 @@ function Navbar() {
                   router.push("/working");
                 }}
               >
-                Working
+                How it works
               </div>
 
               {pathname === "/arena" ? (
