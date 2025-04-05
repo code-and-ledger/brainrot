@@ -17,8 +17,8 @@ body {
   box-sizing: border-box;
 }
 
-html {
-  background-color: #000
+body {
+  background-color: #000;
 }
 
 @keyframes mergeToPfpLogo {

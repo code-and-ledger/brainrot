@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { cn } from "../../lib/utils";
 
 interface GooeyTextProps {
   texts: string[];
@@ -122,7 +123,7 @@ export function GooeyText({
           ref={text1Ref}
           className={cn(
             "absolute inline-block select-none text-center text-6xl md:text-[60pt]",
-            "text-foreground",
+            "text-white",
             textClassName
           )}
         />
@@ -130,7 +131,7 @@ export function GooeyText({
           ref={text2Ref}
           className={cn(
             "absolute inline-block select-none text-center text-6xl md:text-[60pt]",
-            "text-foreground",
+            "text-white",
             textClassName
           )}
         />
