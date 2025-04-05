@@ -4,6 +4,38 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
+// Interface for creating tokens
+interface ITokenCreator {
+    function createToken(
+        string memory name,
+        string memory symbol,
+        uint256 initialSupply,
+        address owner
+    ) external returns (address);
+}
+
+// Simple token contract for winning memes
+contract MemeToken is ERC20 {
+    address public creator;
+    string public memeUniqueId;
+    string public memeImageUrl;
+
+    constructor(
+        string memory name,
+        string memory symbol,
+        uint256 initialSupply,
+        address _creator,
+        string memory _memeUniqueId,
+        string memory _memeImageUrl
+    ) ERC20(name, symbol) {
+        creator = _creator;
+        memeUniqueId = _memeUniqueId;
+        memeImageUrl = _memeImageUrl;
+        _mint(_creator, initialSupply);
+    }
+}
 
 contract MemeCompetition is Ownable {
     using EnumerableSet for EnumerableSet.UintSet;
@@ -11,7 +43,7 @@ contract MemeCompetition is Ownable {
 
     // FLOW token address (adjust for Flow EVM)
     address public constant FLOW_TOKEN =
-        0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9; // Replace with actual Flow EVM token address
+        0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9; // Flow EVM testnet token
 
     struct Game {
         uint256 gameId;
@@ -25,6 +57,7 @@ contract MemeCompetition is Ownable {
         uint256 roundDuration;
         uint256 totalParticipants;
         uint256 remainingParticipants;
+        address tokenAddress; // Address of the token created for the winning meme
     }
 
     struct Meme {
@@ -102,6 +135,13 @@ contract MemeCompetition is Ownable {
         uint256 winningMemeId,
         uint256 prizeAmount
     );
+    event TokenCreated(
+        uint256 indexed gameId,
+        uint256 indexed memeId,
+        address tokenAddress,
+        uint256 initialSupply
+    );
+    event PaymentReceived(address indexed from, uint256 amount);
 
     constructor() Ownable(msg.sender) {}
 
@@ -122,7 +162,8 @@ contract MemeCompetition is Ownable {
             entryFee: _entryFee,
             roundDuration: _roundDuration,
             totalParticipants: 0,
-            remainingParticipants: 0
+            remainingParticipants: 0,
+            tokenAddress: address(0)
         });
 
         emit GameCreated(gameId, msg.sender);
@@ -176,19 +217,28 @@ contract MemeCompetition is Ownable {
             "Already joined this game"
         );
 
-        // Transfer entry fee
+        // Transfer entry fee with better error checking
+        uint256 entryFee = games[_gameId].entryFee;
         IERC20 flowToken = IERC20(FLOW_TOKEN);
-        require(
-            flowToken.transferFrom(
-                msg.sender,
-                address(this),
-                games[_gameId].entryFee
-            ),
-            "Payment failed"
+
+        // Check allowance first
+        uint256 allowance = flowToken.allowance(msg.sender, address(this));
+        require(allowance >= entryFee, "Insufficient token allowance");
+
+        // Check balance
+        uint256 balance = flowToken.balanceOf(msg.sender);
+        require(balance >= entryFee, "Insufficient token balance");
+
+        // Perform transfer
+        bool success = flowToken.transferFrom(
+            msg.sender,
+            address(this),
+            entryFee
         );
+        require(success, "Payment failed");
 
         // Update game state
-        games[_gameId].prizePool += games[_gameId].entryFee;
+        games[_gameId].prizePool += entryFee;
         games[_gameId].totalParticipants++;
         games[_gameId].remainingParticipants++;
 
@@ -203,6 +253,7 @@ contract MemeCompetition is Ownable {
         });
 
         emit UserJoined(_gameId, msg.sender);
+        emit PaymentReceived(msg.sender, entryFee);
     }
 
     function submitMeme(
@@ -219,19 +270,28 @@ contract MemeCompetition is Ownable {
 
         // Automatically join game if not already a participant
         if (!gameParticipants[_gameId].contains(msg.sender)) {
-            // Transfer entry fee
+            // Transfer entry fee with better error handling
+            uint256 entryFee = games[_gameId].entryFee;
             IERC20 flowToken = IERC20(FLOW_TOKEN);
-            require(
-                flowToken.transferFrom(
-                    msg.sender,
-                    address(this),
-                    games[_gameId].entryFee
-                ),
-                "Payment failed"
+
+            // Check allowance first
+            uint256 allowance = flowToken.allowance(msg.sender, address(this));
+            require(allowance >= entryFee, "Insufficient token allowance");
+
+            // Check balance
+            uint256 balance = flowToken.balanceOf(msg.sender);
+            require(balance >= entryFee, "Insufficient token balance");
+
+            // Perform transfer
+            bool success = flowToken.transferFrom(
+                msg.sender,
+                address(this),
+                entryFee
             );
+            require(success, "Payment failed");
 
             // Update game state
-            games[_gameId].prizePool += games[_gameId].entryFee;
+            games[_gameId].prizePool += entryFee;
             games[_gameId].totalParticipants++;
             games[_gameId].remainingParticipants++;
 
@@ -246,6 +306,7 @@ contract MemeCompetition is Ownable {
             });
 
             emit UserJoined(_gameId, msg.sender);
+            emit PaymentReceived(msg.sender, entryFee);
         }
 
         // Create the meme
@@ -270,7 +331,7 @@ contract MemeCompetition is Ownable {
 
     function vote(uint256 _gameId, uint256 _memeId, uint256 _votes) external {
         require(games[_gameId].isStarted, "Game not started");
-        require(!games[_gameId].isActive, "Game already ended");
+        require(games[_gameId].isActive, "Game already ended");
         require(
             gameParticipants[_gameId].contains(msg.sender),
             "Not a participant"
@@ -353,7 +414,6 @@ contract MemeCompetition is Ownable {
             // This would involve sorting memes by votes and selecting top performers
         }
 
-        games[_gameId].currentRound = roundNumber;
         emit RoundStarted(_gameId, roundNumber, startTime);
     }
 
@@ -426,11 +486,51 @@ contract MemeCompetition is Ownable {
             }
         }
 
-        // Distribute prizes (simplified - winner takes all)
-        // In a real implementation, you'd want to distribute to multiple winners
-        // and handle the token creation and liquidity provision
+        // Create token for the winning meme
+        _createTokenForWinningMeme(_gameId, winningMemeId);
 
         emit GameEnded(_gameId, winningMemeId, games[_gameId].prizePool);
+    }
+
+    // Function to create a token for the winning meme
+    function _createTokenForWinningMeme(
+        uint256 _gameId,
+        uint256 _memeId
+    ) internal {
+        Meme storage winningMeme = memes[_memeId];
+
+        // Calculate token supply based on the prize pool
+        // 1 FLOW = 1000 Meme Tokens
+        uint256 initialSupply = games[_gameId].prizePool * 1000;
+
+        // Create new token
+        MemeToken newToken = new MemeToken(
+            winningMeme.tokenName,
+            winningMeme.tokenSymbol,
+            initialSupply,
+            winningMeme.creator,
+            winningMeme.uniqueId,
+            winningMeme.imageUrl
+        );
+
+        // Store token address in game
+        games[_gameId].tokenAddress = address(newToken);
+
+        // Emit token creation event
+        emit TokenCreated(_gameId, _memeId, address(newToken), initialSupply);
+    }
+
+    // Function to check if a user is a participant
+    function isParticipant(
+        uint256 _gameId,
+        address _user
+    ) public view returns (bool) {
+        return gameParticipants[_gameId].contains(_user);
+    }
+
+    // Function to get number of memes in a game
+    function getGameMemeCount(uint256 _gameId) public view returns (uint256) {
+        return gameMemes[_gameId].length();
     }
 
     // View functions
@@ -450,7 +550,8 @@ contract MemeCompetition is Ownable {
             uint256 entryFee,
             uint256 roundDuration,
             uint256 totalParticipants,
-            uint256 remainingParticipants
+            uint256 remainingParticipants,
+            address tokenAddress
         )
     {
         Game storage game = games[_gameId];
@@ -465,7 +566,8 @@ contract MemeCompetition is Ownable {
             game.entryFee,
             game.roundDuration,
             game.totalParticipants,
-            game.remainingParticipants
+            game.remainingParticipants,
+            game.tokenAddress
         );
     }
 
@@ -573,8 +675,7 @@ contract MemeCompetition is Ownable {
             scoreArray[i] = participants[_gameId][userArray[i]].score;
         }
 
-        // Sort by score (descending) - this is simplified and might run into gas limits
-        // In production, you'd want to implement a more efficient sorting mechanism
+        // Sort by score (descending)
         for (uint256 i = 0; i < userArray.length; i++) {
             for (uint256 j = i + 1; j < userArray.length; j++) {
                 if (scoreArray[i] < scoreArray[j]) {
@@ -592,5 +693,15 @@ contract MemeCompetition is Ownable {
         }
 
         return (userArray, scoreArray);
+    }
+
+    // Function to get token address for a game
+    function getGameToken(uint256 _gameId) public view returns (address) {
+        return games[_gameId].tokenAddress;
+    }
+
+    // Fallback function to receive native tokens
+    receive() external payable {
+        emit PaymentReceived(msg.sender, msg.value);
     }
 }
