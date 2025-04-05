@@ -8,6 +8,7 @@ import { fadeInUp, staggerContainer } from "./variants.js";
 import HowItWorksPopup from "./HowItWorksPopup";
 import { useRouter } from "next/navigation";
 import SecondaryButton from "./secondarybutton";
+import Link from "next/link";
 
 function Navbar() {
   const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
@@ -51,12 +52,14 @@ function Navbar() {
               >
                 Working
               </div>
-              <PrimaryButton
-                children={"Launch App"}
-                onClick={() => {
-                  router.push("/app");
-                }}
-              />
+              <Link href="/arena">
+                <PrimaryButton
+                  children={"Launch App"}
+                  onClick={() => {
+                    router.push("/arena");
+                  }}
+                />
+              </Link>
             </div>
           </nav>
         </header>

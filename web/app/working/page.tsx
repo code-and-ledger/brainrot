@@ -8,8 +8,10 @@ import styles from "../../styles/Home.module.css";
 import Navbar from "../components/Navbar";
 import PrimaryButton from "../components/primaryButton";
 import Footer from "../components/Footer";
+import { useRouter } from "next/navigation";
 
 const Working = () => {
+  const router = useRouter();
   return (
     <div className="bg-black min-h-screen">
       <Navbar />
@@ -75,7 +77,12 @@ const Working = () => {
                 transition={{ duration: 0.6, delay: 0.4 }}
                 className="flex justify-center mt-10"
               >
-                <PrimaryButton children={"Launch App"} onClick={() => {}} />
+                <PrimaryButton
+                  children={"Launch App"}
+                  onClick={() => {
+                    router.push("/arena");
+                  }}
+                />
               </motion.div>
             </div>
           </div>

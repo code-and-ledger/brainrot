@@ -1,11 +1,4 @@
-import Image from "next/image";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
-import type { NextPage } from "next";
-import { motion } from "framer-motion";
-
-import styles from "../styles/Home.module.css";
 import Navbar from "../app/components/Navbar";
-import PrimaryButton from "../app/components/primaryButton";
 import Footer from "./components/Footer";
 
 export default function Home() {
@@ -26,9 +19,7 @@ export default function Home() {
                   crypto tokens
                 </p>
 
-                <div>
-                  <PrimaryButton children={"Launch App"} onClick={() => {}} />
-                </div>
+                <div className="flex justify-center"></div>
               </div>
             </div>
           </main>
