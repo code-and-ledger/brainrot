@@ -6,13 +6,17 @@ import PrimaryButton from "./primaryButton";
 import { motion } from "framer-motion";
 import { fadeInUp, staggerContainer } from "./variants.js";
 import HowItWorksPopup from "./HowItWorksPopup";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import SecondaryButton from "./secondarybutton";
 import Link from "next/link";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { CustomButton } from "./CustomButton";
 
 function Navbar() {
   const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
+
   return (
     <>
       <motion.nav variants={fadeInUp} className="p-2  ">
@@ -52,14 +56,19 @@ function Navbar() {
               >
                 Working
               </div>
-              <Link href="/arena">
-                <PrimaryButton
-                  children={"Launch App"}
-                  onClick={() => {
-                    router.push("/arena");
-                  }}
-                />
-              </Link>
+
+              {pathname === "/arena" ? (
+                <CustomButton />
+              ) : (
+                <Link href="/arena">
+                  <PrimaryButton
+                    children={"Launch App"}
+                    onClick={() => {
+                      router.push("/arena");
+                    }}
+                  />
+                </Link>
+              )}
             </div>
           </nav>
         </header>

@@ -78,12 +78,12 @@ export default function JoinPage() {
         {isConnected && (
           <div>
             {/* Mode Toggle */}
-            <div className="bg-gray-900 p-2 rounded-xl flex mb-8">
+            <div className=" p-2 rounded-xl flex mb-8">
               <button
                 className={`flex-1 py-3 rounded-lg font-medium transition-all ${
                   joinMode === "join"
                     ? "bg-white text-black"
-                    : "hover:bg-gray-800"
+                    : "hover:bg-gray-950"
                 }`}
                 onClick={() => setJoinMode("join")}
               >
@@ -93,7 +93,7 @@ export default function JoinPage() {
                 className={`flex-1 py-3 rounded-lg font-medium transition-all ${
                   joinMode === "create"
                     ? "bg-white text-black"
-                    : "hover:bg-gray-800"
+                    : "hover:bg-gray-950"
                 }`}
                 onClick={() => setJoinMode("create")}
               >
@@ -107,7 +107,7 @@ export default function JoinPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
               onSubmit={handleSubmit}
-              className="bg-gray-900 p-6 rounded-xl"
+              className=" p-6 rounded-xl"
             >
               {joinMode === "join" ? (
                 <>
@@ -129,7 +129,7 @@ export default function JoinPage() {
                       value={memeTitle}
                       onChange={(e) => setMemeTitle(e.target.value)}
                       required
-                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-white"
+                      className="w-full bg-gray-950 border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-white"
                     />
                   </div>
 
@@ -191,8 +191,8 @@ export default function JoinPage() {
                 disabled={isLoading || (joinMode === "create" && !selectedFile)}
                 className={`w-full py-4 rounded-lg font-bold text-black transition-all ${
                   isLoading || (joinMode === "create" && !selectedFile)
-                    ? "bg-gray-700 text-white cursor-not-allowed"
-                    : "bg-white hover:bg-gray-200"
+                    ? "bg-gray-950 text-white cursor-not-allowed"
+                    : "bg-white hover:bg-black hover:text-white hover:border"
                 }`}
               >
                 {isLoading ? (
