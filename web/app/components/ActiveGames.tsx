@@ -87,24 +87,20 @@ export default function ActiveGames() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {games.map((game) => (
-          <div key={game.gameId} className="border rounded-lg p-4 shadow-md">
-            <h3 className="text-lg font-semibold">Game #{game.gameId}</h3>
+          <div
+            key={game.gameId}
+            className="border rounded-lg cursor-pointer p-4 shadow-md"
+          >
+            <Link href={`/game/${game.gameId}`} className="cursor-pointer">
+              <h3 className="text-lg font-semibold">Game #{game.gameId}</h3>
 
-            <div className="mt-2 space-y-1">
-              <p>Status: {game.isStarted ? "In Progress" : "Not Started"}</p>
-              <p>Prize Pool: {formatEther(game.prizePool)} FLOW</p>
-              <p>Participants: {game.totalParticipants}</p>
-              <p>Entry Fee: {formatEther(game.entryFee)} FLOW</p>
-            </div>
-
-            <div className="mt-4">
-              <Link
-                href={`/game/${game.gameId}`}
-                className="block w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded text-center"
-              >
-                {game.isStarted ? "View Game" : "Join Game"}
-              </Link>
-            </div>
+              <div className="mt-2 space-y-1">
+                <p>Status: {game.isStarted ? "In Progress" : "Not Started"}</p>
+                <p>Prize Pool: {formatEther(game.prizePool)} FLOW</p>
+                <p>Participants: {game.totalParticipants}</p>
+                <p>Entry Fee: {formatEther(game.entryFee)} FLOW</p>
+              </div>
+            </Link>
           </div>
         ))}
       </div>

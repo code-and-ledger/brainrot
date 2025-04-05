@@ -216,11 +216,39 @@ contract MemeCompetition is Ownable {
     ) external {
         require(games[_gameId].isActive, "Game is not active");
         require(!games[_gameId].isStarted, "Game already started");
-        require(
-            gameParticipants[_gameId].contains(msg.sender),
-            "Must join game first"
-        );
 
+        // Automatically join game if not already a participant
+        if (!gameParticipants[_gameId].contains(msg.sender)) {
+            // Transfer entry fee
+            IERC20 flowToken = IERC20(FLOW_TOKEN);
+            require(
+                flowToken.transferFrom(
+                    msg.sender,
+                    address(this),
+                    games[_gameId].entryFee
+                ),
+                "Payment failed"
+            );
+
+            // Update game state
+            games[_gameId].prizePool += games[_gameId].entryFee;
+            games[_gameId].totalParticipants++;
+            games[_gameId].remainingParticipants++;
+
+            // Add participant
+            gameParticipants[_gameId].add(msg.sender);
+            participants[_gameId][msg.sender] = Participant({
+                user: msg.sender,
+                credits: 0,
+                score: 0,
+                isEliminated: false,
+                lastVotedRound: 0
+            });
+
+            emit UserJoined(_gameId, msg.sender);
+        }
+
+        // Create the meme
         uint256 memeId = nextMemeId++;
         memes[memeId] = Meme({
             memeId: memeId,

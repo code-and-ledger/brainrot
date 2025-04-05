@@ -1,3 +1,4 @@
+"use client";
 import { createPublicClient, http, createWalletClient } from "viem";
 import {
   usePublicClient,
@@ -9,7 +10,7 @@ import { useState, useEffect } from "react";
 
 // Contract address where MemeCompetition is deployed
 export const MEME_COMPETITION_ADDRESS =
-  "0x57ac27266E19339A079046407EEda493c7A6FE39"; // Replace with your deployed contract address
+  "0x93C0b69042f3703537774c228a24E8c9F582a840"; // Replace with your deployed contract address
 
 // Flow token address (same as in contract)
 export const FLOW_TOKEN_ADDRESS = "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9";

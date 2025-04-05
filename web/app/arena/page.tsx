@@ -1,39 +1,111 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Navbar from "../components/Navbar";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useAccount } from "wagmi";
+import { useSubmitMeme } from "../hooks/useSubmitMeme";
+import { useContractInteractions } from "../lib/useContractInteractions";
 
 export default function JoinPage() {
   const router = useRouter();
   const [joinMode, setJoinMode] = useState("join"); // "join" or "create"
-  const [gameCode, setGameCode] = useState("");
+  const [gameId, setGameId] = useState<number>(1); // Default to game ID 1
   const [isLoading, setIsLoading] = useState(false);
   const [memeTitle, setMemeTitle] = useState("");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const { isConnected } = useAccount();
+  const [memeDescription, setMemeDescription] = useState("");
+  const [tokenName, setTokenName] = useState("");
+  const [tokenSymbol, setTokenSymbol] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [activeGames, setActiveGames] = useState<any[]>([]);
+  const [selectedGameId, setSelectedGameId] = useState<number | null>(null);
 
-  // Handle file selection
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && file.type.startsWith("image/")) {
-      setSelectedFile(file);
-      const reader = new FileReader();
-      reader.onload = () => {
-        setPreviewUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { isConnected, address } = useAccount();
+
+  const { createMeme, isSubmitting, error, success, txHash } = useSubmitMeme();
+  const { getGameInfo, joinGame } = useContractInteractions();
+
+  // Fetch active games
+  useEffect(() => {
+    const fetchGames = async () => {
+      try {
+        // For simplicity, check for games with IDs 1-5
+        const games = [];
+
+        for (let i = 1; i <= 5; i++) {
+          const result = await getGameInfo(i);
+          if (
+            result.success &&
+            result.data &&
+            result.data.isActive &&
+            !result.data.isStarted
+          ) {
+            games.push({
+              id: i,
+              entryFee: result.data.entryFee.toString(),
+              participants: result.data.totalParticipants,
+            });
+          }
+        }
+
+        setActiveGames(games);
+        if (games.length > 0) {
+          setSelectedGameId(games[0].id);
+          setGameId(games[0].id);
+        }
+      } catch (error) {
+        console.error("Error fetching games:", error);
+      }
+    };
+
+    fetchGames();
+  }, [getGameInfo]);
+
+  // Handle join game
+  const handleJoinGame = async () => {
+    if (!isConnected) {
+      alert("Please connect your wallet to get rotted!");
+      return;
+    }
+
+    if (!selectedGameId) {
+      alert("Please select a game to join");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Get game info to know the entry fee
+      const gameInfo = await getGameInfo(selectedGameId);
+      if (!gameInfo.success || !gameInfo.data) {
+        throw new Error("Failed to get game info");
+      }
+
+      // Join the game
+      const entryFee = gameInfo.data.entryFee.toString();
+      const result = await joinGame(selectedGameId, entryFee);
+
+      if (result.success) {
+        // Redirect to game page after successful join
+        router.push(`/game/${selectedGameId}`);
+      } else {
+        alert(`Failed to join game: ${result.error}`);
+      }
+    } catch (error: any) {
+      console.error("Error joining game:", error);
+      alert(`Error joining game: ${error.message}`);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Handle form submission
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  // Handle meme submission
+  const handleSubmitMeme = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!isConnected) {
@@ -41,18 +113,56 @@ export default function JoinPage() {
       return;
     }
 
-    setIsLoading(true);
+    if (!selectedGameId) {
+      alert("Please select a game to join");
+      return;
+    }
+
+    if (
+      !memeTitle ||
+      !memeDescription ||
+      !tokenName ||
+      !tokenSymbol ||
+      !imageUrl
+    ) {
+      alert("Please fill in all fields");
+      return;
+    }
 
     try {
-      // Simulate API call with timeout
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // First, join the game
+      const gameInfo = await getGameInfo(selectedGameId);
+      if (!gameInfo.success || !gameInfo.data) {
+        throw new Error("Failed to get game info");
+      }
 
-      // Redirect to game page after successful submission
-      router.push("/game");
-    } catch (error) {
-      console.error("Error joining game:", error);
-    } finally {
-      setIsLoading(false);
+      // Join the game
+      const entryFee = gameInfo.data.entryFee.toString();
+      const joinResult = await joinGame(selectedGameId, entryFee);
+
+      if (!joinResult.success) {
+        throw new Error(`Failed to join game: ${joinResult.error}`);
+      }
+
+      // Then submit the meme
+      const result = await createMeme({
+        gameId: selectedGameId,
+        name: memeTitle,
+        description: memeDescription,
+        tokenName,
+        tokenSymbol,
+        imageUrl,
+      });
+
+      if (result.success) {
+        // Redirect to game page after successful submission
+        router.push(`/game/${selectedGameId}`);
+      } else {
+        alert(`Failed to submit meme: ${result.error}`);
+      }
+    } catch (error: any) {
+      console.error("Error submitting meme:", error);
+      alert(`Error submitting meme: ${error.message}`);
     }
   };
 
@@ -61,7 +171,7 @@ export default function JoinPage() {
       <Navbar />
 
       {!isConnected && (
-        <div className="mb-6 p-4 mx-auto   max-w-lg    border border-red-500 rounded-lg text-center">
+        <div className="mb-6 p-4 mx-auto max-w-lg border border-red-500 rounded-lg text-center">
           <p className="text-white font-medium">
             Connect wallet to get rotted!
           </p>
@@ -77,8 +187,25 @@ export default function JoinPage() {
 
         {isConnected && (
           <div>
+            {/* Game Selection */}
+            <div className="mb-6">
+              <label className="block text-gray-400 mb-2">Select Game</label>
+              <select
+                value={selectedGameId || ""}
+                onChange={(e) => setSelectedGameId(Number(e.target.value))}
+                className="w-full bg-gray-950 border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-white"
+              >
+                <option value="">Select a game</option>
+                {activeGames.map((game) => (
+                  <option key={game.id} value={game.id}>
+                    Game #{game.id} - {game.participants} players
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {/* Mode Toggle */}
-            <div className=" p-2 rounded-xl flex mb-8">
+            <div className="p-2 rounded-xl flex mb-8">
               <button
                 className={`flex-1 py-3 rounded-lg font-medium transition-all ${
                   joinMode === "join"
@@ -106,12 +233,16 @@ export default function JoinPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
-              onSubmit={handleSubmit}
-              className=" p-6 rounded-xl"
+              onSubmit={joinMode === "join" ? handleJoinGame : handleSubmitMeme}
+              className="p-6 rounded-xl"
             >
               {joinMode === "join" ? (
                 <>
-                  <h2 className="text-2xl font-bold mb-4">Only Join Game</h2>
+                  <h2 className="text-2xl font-bold mb-4">Join Game</h2>
+                  <p className="text-gray-400 mb-6">
+                    Join a game to participate in the meme competition. You'll
+                    need to pay an entry fee to join.
+                  </p>
                 </>
               ) : (
                 <>
@@ -135,67 +266,110 @@ export default function JoinPage() {
 
                   <div className="mb-6">
                     <label className="block text-gray-400 mb-2">
-                      Upload Meme Image
+                      Meme Description
                     </label>
-                    <div
-                      onClick={() => fileInputRef.current?.click()}
-                      className="border-2 border-dashed border-gray-700 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:border-white transition-colors"
-                    >
-                      {previewUrl ? (
-                        <div className="relative w-full aspect-square mb-4">
+                    <textarea
+                      placeholder="Describe your meme"
+                      value={memeDescription}
+                      onChange={(e) => setMemeDescription(e.target.value)}
+                      required
+                      className="w-full bg-gray-950 border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-white"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="mb-6">
+                    <label className="block text-gray-400 mb-2">
+                      Token Name (if your meme wins)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g., Doge Coin"
+                      value={tokenName}
+                      onChange={(e) => setTokenName(e.target.value)}
+                      required
+                      className="w-full bg-gray-950 border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-white"
+                    />
+                  </div>
+
+                  <div className="mb-6">
+                    <label className="block text-gray-400 mb-2">
+                      Token Symbol (if your meme wins)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g., DOGE"
+                      value={tokenSymbol}
+                      onChange={(e) => setTokenSymbol(e.target.value)}
+                      required
+                      maxLength={5}
+                      className="w-full bg-gray-950 border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-white"
+                    />
+                  </div>
+
+                  <div className="mb-6">
+                    <label className="block text-gray-400 mb-2">
+                      Meme Image URL
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="Enter an image URL (e.g., https://example.com/meme.jpg)"
+                      value={imageUrl}
+                      onChange={(e) => setImageUrl(e.target.value)}
+                      required
+                      className="w-full bg-gray-950 border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-white"
+                    />
+                    {imageUrl && (
+                      <div className="mt-4">
+                        <p className="text-gray-400 mb-2">Image Preview:</p>
+                        <div className="relative w-full aspect-square rounded-lg overflow-hidden border border-gray-700">
                           <img
-                            src={previewUrl}
+                            src={imageUrl}
                             alt="Meme preview"
-                            className="w-full h-full object-contain rounded-lg"
+                            className="w-full h-full object-contain"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src =
+                                "https://placehold.co/400x400/black/white?text=Invalid+Image+URL";
+                            }}
                           />
                         </div>
-                      ) : (
-                        <div className="py-12 flex flex-col items-center">
-                          <svg
-                            className="w-12 h-12 text-gray-500 mb-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                            ></path>
-                          </svg>
-                          <p className="text-gray-400">
-                            Click to upload your meme
-                          </p>
-                          <p className="text-gray-500 text-sm mt-1">
-                            (JPG, PNG, GIF)
-                          </p>
-                        </div>
-                      )}
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        accept="image/*"
-                        onChange={handleFileChange}
-                        className="hidden"
-                        required
-                      />
-                    </div>
+                      </div>
+                    )}
+                    <p className="text-xs text-gray-500 mt-2">
+                      Enter a direct link to your meme image
+                    </p>
                   </div>
                 </>
               )}
 
               <button
                 type="submit"
-                disabled={isLoading || (joinMode === "create" && !selectedFile)}
+                disabled={
+                  isLoading ||
+                  isSubmitting ||
+                  !selectedGameId ||
+                  (joinMode === "create" &&
+                    (!imageUrl ||
+                      !memeTitle ||
+                      !memeDescription ||
+                      !tokenName ||
+                      !tokenSymbol))
+                }
                 className={`w-full py-4 rounded-lg font-bold text-black transition-all ${
-                  isLoading || (joinMode === "create" && !selectedFile)
+                  isLoading ||
+                  isSubmitting ||
+                  !selectedGameId ||
+                  (joinMode === "create" &&
+                    (!imageUrl ||
+                      !memeTitle ||
+                      !memeDescription ||
+                      !tokenName ||
+                      !tokenSymbol))
                     ? "bg-gray-950 text-white cursor-not-allowed"
                     : "bg-white hover:bg-black hover:text-white hover:border"
                 }`}
               >
-                {isLoading ? (
+                {isLoading || isSubmitting ? (
                   <span className="flex items-center justify-center">
                     <svg
                       className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
@@ -222,15 +396,32 @@ export default function JoinPage() {
                 ) : joinMode === "join" ? (
                   "Join Game"
                 ) : (
-                  "Create & Join"
+                  "Create Meme & Join"
                 )}
               </button>
+
+              {error && (
+                <div className="mt-4 p-3 bg-red-900 text-red-100 rounded-lg">
+                  {error}
+                </div>
+              )}
+
+              {success && (
+                <div className="mt-4 p-3 bg-green-900 text-green-100 rounded-lg">
+                  Meme submitted successfully!
+                  {txHash && (
+                    <p className="text-xs mt-1 overflow-hidden text-ellipsis">
+                      Transaction: {txHash}
+                    </p>
+                  )}
+                </div>
+              )}
             </motion.form>
           </div>
         )}
 
         {/* Game Info */}
-        <div className="mt-8   p-6 rounded-xl">
+        <div className="mt-8 p-6 rounded-xl">
           <h2
             className="text-xl font-bold mb-4"
             style={{ fontFamily: "var(--font-permanent-marker)" }}

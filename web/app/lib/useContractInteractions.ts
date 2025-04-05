@@ -1,3 +1,4 @@
+"use client";
 import { useState } from "react";
 import { parseUnits } from "viem";
 import { useAccount } from "wagmi";
@@ -108,7 +109,7 @@ export function useContractInteractions() {
 
       // Then join the game
       const joinTx = await writeContract("joinGame", [BigInt(gameId)]);
-
+      console.log("joinTx", joinTx);
       setIsLoading(false);
       return { success: true, approveTxHash: approveTx, joinTxHash: joinTx };
     } catch (err: any) {
