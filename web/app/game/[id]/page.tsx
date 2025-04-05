@@ -7,6 +7,7 @@ import JoinGame from "../../components/JoinGame";
 import SubmitMeme from "../../components/SubmitMeme";
 import VotingArea from "../../components/VotingArea";
 import Leaderboard from "../../components/Leaderboard";
+import Navbar from "@/app/components/Navbar";
 
 interface GameDetailPageProps {
   params: {
@@ -15,7 +16,9 @@ interface GameDetailPageProps {
 }
 
 export default function GameDetailPage({ params }: GameDetailPageProps) {
+  // In current Next.js, we can still access params directly
   const gameId = parseInt(params.id);
+  console.log(gameId);
   const [gameInfo, setGameInfo] = useState<any>(null);
   const [isParticipant, setIsParticipant] = useState(false);
   const [activePage, setActivePage] = useState<
@@ -64,6 +67,8 @@ export default function GameDetailPage({ params }: GameDetailPageProps) {
               }
             }
           }
+          let gameInfo = await getGameInfo(gameId);
+          console.log(gameInfo);
         } else {
           setError("Game not found");
         }
@@ -75,7 +80,7 @@ export default function GameDetailPage({ params }: GameDetailPageProps) {
     };
 
     fetchGameData();
-  }, [gameId, address, getGameInfo, getParticipantInfo]);
+  }, [gameId, address]);
 
   const handleGameJoined = () => {
     setIsParticipant(true);
@@ -120,104 +125,112 @@ export default function GameDetailPage({ params }: GameDetailPageProps) {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Game #{gameId}</h1>
-        <div className="bg-gray-100 p-4 rounded-lg">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <p className="text-gray-600">Status</p>
-              <p className="font-medium">
-                {gameInfo.isActive
-                  ? gameInfo.isStarted
-                    ? "In Progress"
-                    : "Not Started"
-                  : "Ended"}
-              </p>
-            </div>
-            <div>
-              <p className="text-gray-600">Prize Pool</p>
-              <p className="font-medium">
-                {gameInfo.prizePool.toString()} FLOW
-              </p>
-            </div>
-            <div>
-              <p className="text-gray-600">Current Round</p>
-              <p className="font-medium">{gameInfo.currentRound}</p>
+    <>
+      <Navbar />
+      <div className="container mx-auto px-4 py-8 ">
+        <div className="mb-8">
+          <h1
+            className="text-3xl font-bold mb-2"
+            style={{ fontFamily: "var(--font-permanent-marker)" }}
+          >
+            ROT #{gameId}
+          </h1>
+          <div className=" p-4 rounded-lg">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <p className="text-gray-600">Status</p>
+                <p className="font-medium">
+                  {gameInfo.isActive
+                    ? gameInfo.isStarted
+                      ? "In Progress"
+                      : "Not Started"
+                    : "Ended"}
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-600">Prize Pool</p>
+                <p className="font-medium">
+                  {gameInfo.prizePool.toString()} FLOW
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-600">Current Round</p>
+                <p className="font-medium">{gameInfo.currentRound}</p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Navigation Tabs */}
-      <div className="mb-6 border-b">
-        <nav className="flex space-x-8">
-          {!gameInfo.isStarted && !isParticipant && (
+        {/* Navigation Tabs */}
+        <div className="mb-6 border-b">
+          <nav className="flex space-x-8">
+            {!gameInfo.isStarted && !isParticipant && (
+              <button
+                onClick={() => setActivePage("join")}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activePage === "join"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
+              >
+                Join Game
+              </button>
+            )}
+
+            {isParticipant && !gameInfo.isStarted && (
+              <button
+                onClick={() => setActivePage("submit")}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activePage === "submit"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
+              >
+                Submit Meme
+              </button>
+            )}
+
+            {gameInfo.isStarted && (
+              <button
+                onClick={() => setActivePage("vote")}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activePage === "vote"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
+              >
+                Vote
+              </button>
+            )}
+
             <button
-              onClick={() => setActivePage("join")}
+              onClick={() => setActivePage("leaderboard")}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activePage === "join"
+                activePage === "leaderboard"
                   ? "border-blue-500 text-blue-600"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
               }`}
             >
-              Join Game
+              Leaderboard
             </button>
+          </nav>
+        </div>
+
+        {/* Page Content */}
+        <div>
+          {activePage === "join" && gameId && <JoinGame gameId={gameId} />}
+
+          {activePage === "submit" && (
+            <SubmitMeme gameId={gameId} onSuccess={handleMemeSubmitted} />
           )}
 
-          {isParticipant && !gameInfo.isStarted && (
-            <button
-              onClick={() => setActivePage("submit")}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activePage === "submit"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              Submit Meme
-            </button>
+          {activePage === "vote" && (
+            <VotingArea gameId={gameId} roundNumber={gameInfo.currentRound} />
           )}
 
-          {gameInfo.isStarted && (
-            <button
-              onClick={() => setActivePage("vote")}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activePage === "vote"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              Vote
-            </button>
-          )}
-
-          <button
-            onClick={() => setActivePage("leaderboard")}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activePage === "leaderboard"
-                ? "border-blue-500 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
-          >
-            Leaderboard
-          </button>
-        </nav>
+          {activePage === "leaderboard" && <Leaderboard gameId={gameId} />}
+        </div>
       </div>
-
-      {/* Page Content */}
-      <div>
-        {activePage === "join" && <JoinGame gameId={gameId} />}
-
-        {activePage === "submit" && (
-          <SubmitMeme gameId={gameId} onSuccess={handleMemeSubmitted} />
-        )}
-
-        {activePage === "vote" && (
-          <VotingArea gameId={gameId} roundNumber={gameInfo.currentRound} />
-        )}
-
-        {activePage === "leaderboard" && <Leaderboard gameId={gameId} />}
-      </div>
-    </div>
+    </>
   );
 }

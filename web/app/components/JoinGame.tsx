@@ -25,6 +25,7 @@ export default function JoinGame({ gameId }: JoinGameProps) {
       try {
         // Get game information
         const gameResult = await getGameInfo(gameId);
+        console.log(gameResult);
         if (gameResult.success && gameResult.data) {
           setGameInfo(gameResult.data);
 
@@ -39,6 +40,7 @@ export default function JoinGame({ gameId }: JoinGameProps) {
               );
             }
           }
+          setLoading(false);
         } else {
           setError("Game not found");
         }
@@ -52,7 +54,7 @@ export default function JoinGame({ gameId }: JoinGameProps) {
     if (gameId && address) {
       fetchGameData();
     }
-  }, [gameId, address, getGameInfo, getParticipantInfo]);
+  }, [gameId, address]);
 
   const handleJoinGame = async () => {
     if (!gameInfo) return;
@@ -67,9 +69,11 @@ export default function JoinGame({ gameId }: JoinGameProps) {
 
       if (result.success) {
         setIsJoined(true);
+        setLoading(false);
       } else {
         setError(result.error || "Failed to join game");
       }
+      setLoading(false);
     } catch (err: any) {
       setError(err.message || "Error joining game");
     } finally {
@@ -98,7 +102,7 @@ export default function JoinGame({ gameId }: JoinGameProps) {
   }
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
+    <div className="max-w-md mx-auto p-6 border-1 border-gray-300 rounded-lg shadow-md">
       <h2 className="text-2xl font-bold mb-4">Game #{gameId}</h2>
 
       <div className="space-y-3 mb-6">

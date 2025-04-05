@@ -57,7 +57,7 @@ function Navbar() {
                 How it works
               </div>
 
-              {pathname === "/arena" ? (
+              {pathname !== "/" ? (
                 <CustomButton />
               ) : (
                 <Link href="/arena">

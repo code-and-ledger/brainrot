@@ -59,16 +59,31 @@ export default function ActiveGames() {
   }, []);
 
   if (loading || isLoading) {
-    return <div className="p-4 text-center">Loading games...</div>;
+    return <div className="p-4 text-center">Loading rots...</div>;
   }
 
   if (games.length === 0) {
-    return <div className="p-4 text-center">No active games found</div>;
+    return (
+      <div className="p-4 text-center">
+        <h2
+          className="text-xl font-bold mb-4"
+          style={{ fontFamily: "var(--font-permanent-marker)" }}
+        >
+          Active Rots
+        </h2>
+        <p className="text-gray-600">No active games found</p>
+      </div>
+    );
   }
 
   return (
     <div className="p-4">
-      <h2 className="text-xl font-bold mb-4">Active Games</h2>
+      <h2
+        className="text-xl font-bold mb-4"
+        style={{ fontFamily: "var(--font-permanent-marker)" }}
+      >
+        Active Rots
+      </h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {games.map((game) => (
